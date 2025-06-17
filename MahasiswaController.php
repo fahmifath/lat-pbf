@@ -116,3 +116,98 @@ class MahasiswaController extends Controller
         return back()->with('error', 'Gagal menghapus data.');
     }
 }
+
+
+1. 📦 Install Laravel DomPDF
+Jalankan perintah berikut di terminal:
+
+bash
+Copy
+Edit
+composer require barryvdh/laravel-dompdf
+2. 📄 Buat Route Export
+Tambahkan route di routes/web.php:
+
+php
+Copy
+Edit
+use App\Http\Controllers\PengajuanController;
+
+Route::get('/pengajuan/export-pdf', [PengajuanController::class, 'exportPdf'])->name('pengajuan.exportPdf');
+3. 🧠 Tambahkan Fungsi di Controller
+Contoh di PengajuanController.php:
+
+php
+Copy
+Edit
+use Barryvdh\DomPDF\Facade\Pdf; // tambahkan ini di atas
+
+public function exportPdf()
+{
+    $data = Pengajuan::with(['sasaranKegiatan', 'iku', 'ro', 'komponen', 'subKomponen', 'akun'])->get();
+
+    $pdf = Pdf::loadView('pengajuan.pdf', compact('data'));
+
+    return $pdf->download('laporan-pengajuan.pdf');
+}
+4. 🧾 Buat View PDF
+Buat file view: resources/views/pengajuan/pdf.blade.php
+
+Contoh isi file:
+
+blade
+Copy
+Edit
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Laporan Pengajuan</title>
+    <style>
+        body { font-family: sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+        th { background-color: #eee; }
+    </style>
+</head>
+<body>
+    <h2>Laporan Data Pengajuan</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Pengajuan</th>
+                <th>Unit</th>
+                <th>Jumlah</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($data as $item)
+            <tr>
+                <td>{{ $item->pengajuan }}</td>
+                <td>{{ $item->unit_pengaju }}</td>
+                <td>Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                <td>{{ ucfirst($item->status) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</body>
+</html>
+5. (Opsional) 📎 Tambahkan Tombol Export di Blade
+Misalnya di pengajuan/index.blade.php:
+
+blade
+Copy
+Edit
+<a href="{{ route('pengajuan.exportPdf') }}" class="btn btn-danger mb-3">Export PDF</a>
+✅ Hasil
+Ketika kamu buka http://127.0.0.1:8000/pengajuan/export-pdf, PDF akan otomatis di-download.
+
+Kamu juga bisa pakai $pdf->stream() untuk menampilkan langsung di browser:
+
+php
+Copy
+Edit
+return $pdf->stream('laporan-pengajuan.pdf');
+Kalau kamu ingin fitur tambahan seperti export per unit saja, atau berdasarkan filter tertentu, tinggal tambahkan parameter di URL dan query datanya sebelum di-passing ke view PDF. Mau saya bantu juga buatkan versi dengan filter?
